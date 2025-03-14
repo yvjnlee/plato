@@ -3,9 +3,16 @@ import asyncio
 from scrapybara import Scrapybara
 from undetected_playwright.async_api import async_playwright
 
+# loading in .env file
+import os
+from dotenv import load_dotenv
+
+# loading API key from .env file
+load_dotenv()
+SCRAPYBARA_API_KEY = os.getenv("SCRAPYBARA_API_KEY")
 
 async def get_scrapybara_browser():
-    client = Scrapybara(api_key="YOUR_API_KEY")
+    client = Scrapybara(api_key=SCRAPYBARA_API_KEY)
     instance = client.start_browser()
     return instance
 
