@@ -13,7 +13,7 @@
 ---
 ### approach
 ##### approach #1: click while navigating (single-threaded)
-    ###### time taken: 
+###### time taken: 
 1. find menu item + click
     - scroll through page and look for menu item
     - if menu item is found click and exit modal
@@ -21,7 +21,7 @@
     - once clicked, intercept the GraphQL call and add data to dictionary
 
 ##### approach #2: load first, click at once (multi-threaded)
-    ###### time taken: 
+###### time taken: 
 1. load entire page 
     - scroll to the bottom of the page so everything is loaded
 2. segment page into sections
