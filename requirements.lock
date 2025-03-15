@@ -17,6 +17,8 @@ anyio==4.8.0
 certifi==2025.1.31
     # via httpcore
     # via httpx
+dotenv==0.9.9
+    # via plato
 greenlet==3.0.1
     # via undetected-playwright-patch
 h11==0.14.0
@@ -36,7 +38,7 @@ pydantic-core==2.27.2
 pyee==11.0.1
     # via undetected-playwright-patch
 python-dotenv==1.0.1
-    # via plato
+    # via dotenv
 scrapybara==2.4.1
     # via plato
 sniffio==1.3.1

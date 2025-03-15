@@ -2,13 +2,16 @@
 name = "plato"
 version = "0.1.0"
 description = "Add your description here"
+authors = [
+    { name = "yvjnlee", email = "yvjnlee@gmail.com" }
+]
 dependencies = [
     "scrapybara>=2.4.1",
     "undetected-playwright-patch>=1.40.0.post1700587210000",
-    "python-dotenv>=1.0.1",
+    "dotenv>=0.9.9",
 ]
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.12"
 
 [build-system]
 requires = ["hatchling"]

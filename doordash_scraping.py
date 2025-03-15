@@ -45,6 +45,8 @@ async def retrieve_menu_items(instance, start_url: str) -> list[dict]:
         await page.goto(start_url)
 
         # browser automation ...
+        await browser.close()
+
 
 
 async def main():
