@@ -13,15 +13,14 @@
 ---
 ### approach
 ##### approach #1: click while navigating (single-threaded)
-###### time taken: 
 1. find menu item + click
     - scroll through page and look for menu item
     - if menu item is found click and exit modal
 2. intercept GraphQL call
     - once clicked, intercept the GraphQL call and add data to dictionary
+###### time taken: 
 
 ##### approach #2: load first, click at once (multi-threaded)
-###### time taken: 
 1. load entire page 
     - scroll to the bottom of the page so everything is loaded
 2. segment page into sections
@@ -31,6 +30,7 @@
         - closes modal like approach #1
 4. intercept GraphQL calls
     - intercept the GraphQL calls and add data to dictionary
+###### time taken: 
 
 ---
 ### problem log

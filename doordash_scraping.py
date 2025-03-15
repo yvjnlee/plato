@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 from scrapybara import Scrapybara
 from undetected_playwright.async_api import async_playwright
@@ -37,6 +38,9 @@ async def retrieve_menu_items(instance, start_url: str) -> list[dict]:
     :returns:
     a list of menu items on the page, represented as dictionaries
     """
+    # start timer
+    start_time = time.time()
+
     cdp_url = instance.get_cdp_url().cdp_url
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(cdp_url)
@@ -45,6 +49,11 @@ async def retrieve_menu_items(instance, start_url: str) -> list[dict]:
         await page.goto(start_url)
 
         # browser automation ...
+
+        # track time taken
+        total_time = time.time() - start_time
+        print(f"total execution time: {total_time:.2f} seconds")
+
         await browser.close()
 
 
