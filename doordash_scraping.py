@@ -44,7 +44,12 @@ async def retrieve_menu_items(instance, start_url: str) -> list[dict]:
     cdp_url = instance.get_cdp_url().cdp_url
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(cdp_url)
-        page = await browser.new_page()
+        # setting location to bypass set address modal
+        context = browser.new_context(
+            geolocation={"latitude": 37.77493, "longitude": -122.41942},  # SF coordinates
+            permissions=["geolocation"]
+        )
+        page = await context.new_page()
 
         await page.goto(start_url)
 
