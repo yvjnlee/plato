@@ -54,6 +54,9 @@ async def retrieve_menu_items(instance, start_url: str) -> list[dict]:
         await page.goto(start_url)
 
         # browser automation ...
+        # wait for page to be fully loaded
+        await page.wait_for_load_state("networkidle")
+        print("page is loaded")
 
         # track time taken
         total_time = time.time() - start_time
