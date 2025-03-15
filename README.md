@@ -13,24 +13,24 @@
 ---
 ### approach
 ##### approach #1: click while navigating (single-threaded)
-###### time taken: 
+    ###### time taken: 
 1. find menu item + click
-- scroll through page and look for menu item
-- if menu item is found click and exit modal
+    - scroll through page and look for menu item
+    - if menu item is found click and exit modal
 2. intercept GraphQL call
-- once clicked, intercept the GraphQL call and add data to dictionary
+    - once clicked, intercept the GraphQL call and add data to dictionary
 
 ##### approach #2: load first, click at once (multi-threaded)
-###### time taken: 
+    ###### time taken: 
 1. load entire page 
-- scroll to the bottom of the page so everything is loaded
+    - scroll to the bottom of the page so everything is loaded
 2. segment page into sections
-- identify groups of menu items
+    - identify groups of menu items
 3. click all menu items
-- each group clicks all its own menu items in parallel
-    - closes modal like approach #1
+    - each group clicks all its own menu items in parallel
+        - closes modal like approach #1
 4. intercept GraphQL calls
-- intercept the GraphQL calls and add data to dictionary
+    - intercept the GraphQL calls and add data to dictionary
 
 ---
 ### problem log
