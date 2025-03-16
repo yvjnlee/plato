@@ -17,8 +17,7 @@
     - scroll through page and look for menu item
     - if menu item is found click and exit modal
 2. intercept GraphQL call
-    - once clicked, intercept the GraphQL call and add data to dictionary
-###### time taken: 
+    - once clicked, intercept the GraphQL call and add data to dictionary 
 
 ##### approach #2: load first, click at once (multi-threaded)
 1. load entire page 
@@ -30,7 +29,6 @@
         - closes modal like approach #1
 4. intercept GraphQL calls
     - intercept the GraphQL calls and add data to dictionary
-###### time taken: 
 
 ---
 ### problem log
@@ -43,6 +41,11 @@
         - doesn't feel like the cleanest of solutions...
 2. playwright permission denied
     - fixed by adding permission by giving execution permission to node
+3. inconsistent timing
+    - seemed to work one run, timeout the next
+    - for some reason taking screenshots for every step fixed the issue?
+        - i think timeout may have been from rate limiting?
+            - nope was not, i think just randomness
 
 ---
 ### setup
