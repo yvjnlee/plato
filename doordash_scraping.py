@@ -1,14 +1,13 @@
 import asyncio
 import time
+import os
+import math
+from dotenv import load_dotenv
 
 from scrapybara import Scrapybara
 from undetected_playwright.async_api import async_playwright
 
 # loading in .env file
-import os
-from dotenv import load_dotenv
-
-# loading API key from .env file
 load_dotenv()
 SCRAPYBARA_API_KEY = os.getenv("SCRAPYBARA_API_KEY")
 
@@ -16,6 +15,76 @@ async def get_scrapybara_browser():
     client = Scrapybara(api_key=SCRAPYBARA_API_KEY)
     instance = client.start_browser()
     return instance
+
+async def setup_address(page):
+    """
+    1. Setup Address
+    """
+    # click -> data-testid="addressTextButton"
+    # await page.wait_for_selector('[data-testid="addressTextButton"]', state="visible")
+    await page.locator('[data-testid="addressTextButton"]').click()
+    await page.screenshot(path=f"screenshots/checkpoint.png")
+    print("step 1")
+
+    # input San Francisco, CA -> data-testid="AddressAutocompleteField"
+    # await page.wait_for_selector('[data-testid="AddressAutocompleteField"]', state="visible")
+    await page.get_by_test_id("AddressAutocompleteField").first.fill("San Francisco, CA")
+    await page.screenshot(path=f"screenshots/checkpoint.png")
+    print("step 2")
+
+    # select -> data-testid="AddressAutocompleteSuggestion-0"
+    await page.screenshot(path=f"screenshots/checkpoint.png")
+    # await page.wait_for_selector('[data-testid="AddressAutocompleteSuggestion-0"]', state="visible")
+    # await page.locator('[data-testid="AddressAutocompleteSuggestion-0"]').click()
+    await page.keyboard.press("Enter")
+    await page.screenshot(path=f"screenshots/checkpoint.png")
+    print("step 3")
+
+    # click -> data-anchor-id="AddressEditSave"
+    # await page.wait_for_selector('[data-anchor-id="AddressEditSave"]', state="visible")
+    await page.locator('[data-anchor-id="AddressEditSave"]').click()
+    await page.screenshot(path=f"screenshots/checkpoint.png")
+    print("step 4")
+
+    # escape you are outside this area modal
+    # await page.screenshot(path=f"screenshots/checkpoint.png")
+    await page.wait_for_timeout(1500)
+    await page.keyboard.press("Escape")
+    await page.screenshot(path=f"screenshots/checkpoint.png")
+    print("step 5")
+
+    print("ADDRESS SETUP COMPLETE")
+
+async def process_section(page, section_id, start_y, seen_items):
+    """
+    3. Process Menu Items
+    """
+    print(f"starting to process section: {section_id}")
+    await page.evaluate(f"window.scrollTo(0, {start_y})")
+    await page.wait_for_timeout(1500)
+    await page.screenshot(path=f"screenshots/checkpoint.png")
+    print("scrolled to correct section")
+    
+    # find menu items
+    items = await page.locator('[data-anchor-id="MenuItem"]').all()
+    print(f"found {len(items)} items in section {section_id}")
+    
+    item_count = 0
+    for item in items:
+        try:
+            item_name = await item.text_content()
+            if item_name and item_name not in seen_items:
+                await item.click()
+                await page.screenshot(path=f"screenshots/section_{section_id}_item_{item_count}.png")
+
+                # Close modal with ESC key
+                await page.keyboard.press("Escape")
+                await page.wait_for_timeout(500)
+                item_count += 1
+        except Exception as e:
+            print(f"Viewport {section_id}: Error processing item: {e}")
+    
+    print(f"FINISHED PROCESSING SECTION: {section_id}")
 
 async def retrieve_menu_items(instance, start_url: str) -> list[dict]:
     """
@@ -39,6 +108,7 @@ async def retrieve_menu_items(instance, start_url: str) -> list[dict]:
     a list of menu items on the page, represented as dictionaries
     """
     menu_items = []
+    seen_items = set()
 
     # start timer
     start_time = time.time()
@@ -47,116 +117,52 @@ async def retrieve_menu_items(instance, start_url: str) -> list[dict]:
     async with async_playwright() as p:
         browser = await p.chromium.connect_over_cdp(cdp_url)
         page = await browser.new_page()
-
-        await page.goto(start_url)
-
-        # browser automation ...
-        """
-        1. Wait for page to be fully loaded
-        """
-        await page.wait_for_load_state("networkidle")
-        print("page is loaded")
-
-        # in case store is closed
-        await page.keyboard.press("Escape")
-
-        """
-        2. Set address to San Francisco, CA
-        """
-        # click -> data-testid="addressTextButton"
-        # await page.wait_for_selector('[data-testid="addressTextButton"]', state="visible")
-        await page.locator('[data-testid="addressTextButton"]').click()
-        await page.screenshot(path=f"screenshots/address_step_1.png")
-        print("step 1")
-
-        # input San Francisco, CA -> data-testid="AddressAutocompleteField"
-        # await page.wait_for_selector('[data-testid="AddressAutocompleteField"]', state="visible")
-        await page.get_by_test_id("AddressAutocompleteField").first.fill("San Francisco, CA")
-        await page.screenshot(path=f"screenshots/address_step_2.png")
-        print("step 2")
-
-        # select -> data-testid="AddressAutocompleteSuggestion-0"
-        await page.wait_for_selector('[data-testid="AddressAutocompleteSuggestion-0"]', state="visible")
-        await page.locator('[data-testid="AddressAutocompleteSuggestion-0"]').click()
-        await page.screenshot(path=f"screenshots/address_step_3.png")
-        print("step 3")
-
-        # click -> data-anchor-id="AddressEditSave"
-        # await page.wait_for_selector('[data-anchor-id="AddressEditSave"]', state="visible")
-        await page.locator('[data-anchor-id="AddressEditSave"]').click()
-        await page.screenshot(path=f"screenshots/address_step_4.png")
-        print("step 4")
-
-        print("set up address")
         
-        """
-        3. Set up response listener
-        """
-        # handler
+        # load page
+        await page.goto(start_url)
+        await page.wait_for_load_state("networkidle")
+        print("page loaded")
+        
+        # set up address
+        await setup_address(page)
+        
+        # get section dimensions
+        total_height = await page.evaluate("document.body.scrollHeight")
+        viewport_height = await page.evaluate("window.innerHeight")
+        sections = math.ceil(total_height / viewport_height)
+        print(f"section height: {viewport_height}px / total height: {total_height}px, ")
+        print(f"dividing page into {sections} sections")
+
+        # set up response listener
         async def response_handler(response):            
             if response.request.url == "https://www.doordash.com/graphql/itemPage?operation=itemPage":
-                json_data = await response.json()
-                menu_items.append(json_data)
+                try:
+                    json_data = await response.json()
+                    item_name = json_data["data"]["itemPage"]["itemHeader"]["name"]
+                    if item_name not in seen_items:
+                        print(item_name)
+                        seen_items.add(item_name)
+                        menu_items.append(json_data)
+                except:
+                    print(f"Failed to parse JSON response")
 
-        # listener for responses
+        # set up listener
         page.on("response", response_handler)
-
-        print("set up listener")
-
-        """
-        4. Find menu items and click (tentative)
-        """
-        seen_items = set()
-        item_count = 0
-
-        # in case store is closed
-        await page.keyboard.press("Escape")
-
-        while True:
-            # find menu items in current frame
-            items = await page.locator('[data-anchor-id="MenuItem"]').all()
-            print(len(items))
-
-            # process found menu item
-            for item in items:
-                if item and item not in seen_items:
-                    seen_items.add(item)
-                    await item.click()
-
-                    print(f"found item: {item_count}")
-                    await page.screenshot(path=f"screenshots/menu_item_{item_count}.png")
-
-                    # close modal w/ ESC key
-                    await page.keyboard.press("Escape")
-                    item_count += 1
-                    await page.screenshot(path=f"screenshots/checkpoint.png")
-
-            # update scroll
-            current_scroll = await page.evaluate("window.scrollY + window.innerHeight")
-            total_scroll_height = await page.evaluate("document.body.scrollHeight")
-
-            # scroll down to lazy load more menu items
-            await page.evaluate(f"window.scrollBy(0, {current_scroll})")
-            print(current_scroll)
-
-            # if we reach bottom
-            if current_scroll >= total_scroll_height:
-                break
-
-        # all found menu items
-        menu_items = list(seen_items)
-        print(f"\n found menu items:\n{len(menu_items)}")
-
+        print(f"set up listener")
+        
+        # process sections
+        print("starting to process sections")
+        
+        for i in range(sections):
+            start_y = i * viewport_height
+            await process_section(page, i, start_y, seen_items)
+        
         # track time taken
         total_time = time.time() - start_time
         print(f"total execution time: {total_time:.2f} seconds")
-
-        await browser.close()
     
-    print(menu_items)
+    print(f"Total unique menu items found: {len(menu_items)}")
     return menu_items
-
-
 
 async def main():
     instance = await get_scrapybara_browser()
@@ -169,7 +175,6 @@ async def main():
     finally:
         # Be sure to close the browser instance after you're done!
         instance.stop()
-
 
 if __name__ == "__main__":
     asyncio.run(main())
